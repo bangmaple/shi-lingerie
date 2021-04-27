@@ -1,6 +1,6 @@
 
 
-# Bangmapleproject
+# Shi.lingerie (Angular + Spring Boot stack)
 
 This project was generated using [Nx](https://nx.dev).
 
