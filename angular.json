@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "cli": {
+    "defaultCollection": "@nrwl/angular"
+  },
+  "defaultProject": "shi-lingerie",
+  "schematics": {
+    "@nrwl/angular": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      },
+      "storybook-configuration": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/angular:application": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/angular:library": {
+      "style": "scss",
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    },
+    "@nrwl/angular:component": {
+      "style": "scss"
+    }
+  },
+  "projects": {
+    "shi-lingerie": {
+      "projectType": "application",
+      "root": "apps/shi-lingerie",
+      "sourceRoot": "apps/shi-lingerie/src",
+      "prefix": "bangmapleproject",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/apps/shi-lingerie",
+            "index": "apps/shi-lingerie/src/index.html",
+            "main": "apps/shi-lingerie/src/main.ts",
+            "polyfills": "apps/shi-lingerie/src/polyfills.ts",
+            "tsConfig": "apps/shi-lingerie/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "apps/shi-lingerie/src/favicon.ico",
+              "apps/shi-lingerie/src/assets"
+            ],
+            "styles": ["apps/shi-lingerie/src/styles.scss"],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/shi-lingerie/src/environments/environment.ts",
+                  "with": "apps/shi-lingerie/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "shi-lingerie:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "shi-lingerie:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "shi-lingerie:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "apps/shi-lingerie/src/**/*.ts",
+              "apps/shi-lingerie/src/**/*.html"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/shi-lingerie"],
+          "options": {
+            "jestConfig": "apps/shi-lingerie/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "shi-lingerie-e2e": {
+      "root": "apps/shi-lingerie-e2e",
+      "sourceRoot": "apps/shi-lingerie-e2e/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/shi-lingerie-e2e/cypress.json",
+            "tsConfig": "apps/shi-lingerie-e2e/tsconfig.e2e.json",
+            "devServerTarget": "shi-lingerie:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "shi-lingerie:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/shi-lingerie-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    }
+  }
+}
