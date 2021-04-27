@@ -1,22 +1,46 @@
 {
   "implicitDependencies": {
-    "package.json": { "dependencies": "*", "devDependencies": "*" },
+    "package.json": {
+      "dependencies": "*",
+      "devDependencies": "*"
+    },
     ".eslintrc.json": "*"
   },
-  "affected": { "defaultBase": "master" },
+  "affected": {
+    "defaultBase": "master"
+  },
   "npmScope": "bangmapleproject",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
-      "options": { "cacheableOperations": ["build", "lint", "test", "e2e"] }
+      "options": {
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "test",
+          "e2e"
+        ]
+      }
     }
   },
   "projects": {
-    "shi-lingerie": { "tags": [] },
+    "shi-lingerie": {
+      "tags": []
+    },
     "shi-lingerie-e2e": {
       "tags": [],
-      "implicitDependencies": ["shi-lingerie"]
+      "implicitDependencies": [
+        "shi-lingerie"
+      ]
     },
-    "ui": { "tags": [] }
-  }
+    "ui": {
+      "tags": []
+    },
+    "shi-lingerie-server": {
+      "tags": []
+    }
+  },
+  "plugins": [
+    "@nxrocks/nx-spring-boot"
+  ]
 }
