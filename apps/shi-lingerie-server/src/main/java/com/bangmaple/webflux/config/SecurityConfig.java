@@ -1,5 +1,6 @@
 package com.bangmaple.webflux.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -15,6 +16,10 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
         prePostEnabled = true
 )
 public class SecurityConfig {
+
+    @Autowired
+    private CustomUser
+
     private static final String[] ALLOWED_PATHS = {"/",
             "/favicon.ico",
             "/*.png",

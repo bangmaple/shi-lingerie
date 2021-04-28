@@ -2,6 +2,7 @@ package com.bangmaple.webflux.services;
 
 import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.repositories.UsersRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -12,9 +13,12 @@ import java.util.NoSuchElementException;
 public class UsersService {
 
     private UsersRepository repo;
+    private PasswordEncoder passwordEncoder;
 
-    public UsersService(UsersRepository repo) {
+    public UsersService(UsersRepository repo,
+                        PasswordEncoder passwordEncoder) {
         this.repo = repo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Flux<Users> getAll() {
@@ -37,5 +41,9 @@ public class UsersService {
         return repo.findById(id)
                 .switchIfEmpty(Mono.error(NoSuchElementException::new))
                 .flatMap((user) -> repo.deleteById(user.getId()));
+    }
+
+    public Mono<Void> signin(Users user) {
+        return Mono.empty();
     }
 }

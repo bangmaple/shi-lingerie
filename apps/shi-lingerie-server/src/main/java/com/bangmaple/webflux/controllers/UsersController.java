@@ -5,6 +5,7 @@ import com.bangmaple.webflux.services.UsersService;
 import com.bangmaple.webflux.utils.ValidatorUtil;
 import com.bangmaple.webflux.validator.UsersValidator;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -39,6 +40,7 @@ public class UsersController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public Mono<ResponseEntity<Mono<Void>>> deleteUserById(@PathVariable("id") Integer id) {
         return Mono.just(ResponseEntity.ok(service.deleteById(id)));
     }

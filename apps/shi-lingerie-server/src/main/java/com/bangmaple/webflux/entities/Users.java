@@ -30,7 +30,10 @@ public class Users {
     @Column("role")
     private String role;
 
-   // @Override
+    public Users(Users user) {
+    }
+
+    // @Override
   //  public String getId() {
   //      return this.username;
   //  }
