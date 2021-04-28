@@ -1,13 +1,13 @@
-package com.bangmaple;
+package com.bangmaple.webflux;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ShiLingerieServerApplicationTests {
+class WebfluxApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }
