@@ -1,34 +1,45 @@
 package com.bangmaple.webflux.services;
 
 import com.bangmaple.webflux.entities.Users;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.List;
 
 public class UserPrincipal extends Users implements UserDetails {
     private static final long serialVersionUID = -6572014278512709432L;
 
+    private Collection<? extends GrantedAuthority> authorities;
+
+    public UserPrincipal(String username, Collection<? extends GrantedAuthority> authorities) {
+        super();
+        super.setUsername(username);
+        this.authorities = authorities;
+    }
+
+    public UserPrincipal(String username) {
+        super();
+        super.setUsername(username);
+    }
 
     public UserPrincipal(Users user) {
-        super(user);
+        super.setPassword(user.getPassword());
+        super.setUsername(user.getUsername());
+        super.setFullname(user.getFullname());
+        super.setRole(user.getRole());
     }
 
     @Override
-    public List<? extends GrantedAuthority> getAuthorities() {
-        return new LinkedList<GrantedAuthority>(Collections
-                .singleton(new SimpleGrantedAuthority(this.getRole())));
-      //  return getRoles().stream()
-          //      .map(role -> new SimpleGrantedAuthority(role
-          //              .getName().name())).collect(Collectors.toList());
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.authorities;
     }
+
 
     @Override
     public String getUsername() {
-        return this.getUsername();
+        return super.getUsername();
     }
 
     @Override
@@ -50,4 +61,5 @@ public class UserPrincipal extends Users implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

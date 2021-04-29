@@ -2,10 +2,14 @@ package com.bangmaple.webflux.filter;
 
 import com.bangmaple.webflux.utils.JwtUtil;
 import io.jsonwebtoken.JwtException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,40 +23,46 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-@Component
+//@Component
 public class JwtAuthenticationFilter implements WebFilter {
 
+    @Autowired
     private JwtUtil jwtUtil;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
 
-
-    private String getJwtFromRequest(ServerHttpRequest request) {
-        String bearerToken = request.getHeaders().getFirst("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7, bearerToken.length());
+    private String resolveToken(ServerHttpRequest request) {
+        String bearerToken = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer")) {
+            return bearerToken.substring(7);
         }
         return null;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        Pattern actuator_pattern = Pattern.compile("^/actuator.*");
+        String token = resolveToken(exchange.getRequest());
+        if (StringUtils.hasText(token) && this.jwtUtil.validateToken(token)) {
+            Authentication authentication = this.jwtUtil.getAuthentication(token);
+            return chain.filter(exchange)
+                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+        }
+        return chain.filter(exchange);
+    }
+
+   /* public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        Pattern actuator_pattern = Pattern.compile("^/as.*");
         String path = exchange.getRequest().getPath().toString();
         if (actuator_pattern.matcher(path).matches()) {
-            chain.filter(exchange);
-            return Mono.empty();
+            return chain.filter(exchange);
         }
 
         String jwt = getJwtFromRequest(exchange.getRequest());
-
+        System.err.println(jwt);
         try {
             if (jwtUtil.validateToken(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                String email = jwtUtil.getEmailFromToken(jwt);
+                String username = jwtUtil.getUsernameFromToken(jwt);
                 ArrayList<String> roles = jwtUtil.getRolesFromToken(jwt);
-                UserDetails userDetails = User.withUsername(email).password("").roles(String.join(",", roles)).build();
+                UserDetails userDetails = User.withUsername(username).password("").roles(String.join(",", roles)).build();
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                // authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(exchange.getRequest()));
                 authentication.setDetails(exchange.getRequest());
@@ -70,4 +80,6 @@ public class JwtAuthenticationFilter implements WebFilter {
         }
         return chain.filter(exchange);
     }
+
+    */
 }
