@@ -18,31 +18,36 @@ public class JwtUtil {
     public static final String SECRET = "1234567890987654321";
     public static final Long expireTime = 86400000L;
 
-    public Authentication getAuthentication(String token) {
-        Claims claims = getAllClaimsFromToken(token);
-        Object authoritiesClaim = claims.get("roles");
-        Object username = claims.get("username");
-        Collection<? extends GrantedAuthority> authorities = authoritiesClaim == null ?
-                AuthorityUtils.NO_AUTHORITIES : AuthorityUtils.commaSeparatedStringToAuthorityList(authoritiesClaim.toString());
-        UserPrincipal principal = new UserPrincipal(username.toString(), authorities);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+    public Mono<Authentication> getAuthentication(String token) {
+        return getAllClaimsFromToken(token).map((claims) -> {
+            Object authoritiesClaim = claims.get("roles");
+            Object username = claims.get("username");
+            Collection<? extends GrantedAuthority> authorities = authoritiesClaim == null ?
+                    AuthorityUtils.NO_AUTHORITIES : AuthorityUtils.commaSeparatedStringToAuthorityList(authoritiesClaim.toString());
+            UserPrincipal principal = new UserPrincipal(username.toString(), authorities);
+            return (Authentication)new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        });
+
     }
 
-    public Claims getAllClaimsFromToken(String token) {
-        return (Jwts.parser().setSigningKey(SECRET)).parseClaimsJws(token)
-                .getBody();
+    public Mono<Claims> getAllClaimsFromToken(String token) {
+        return Mono.just(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token)
+                .getBody());
     }
 
     public Long getUserIdFromToken(String token) {
         return Long.parseLong(getAllClaimsFromToken(token).getSubject());
     }
 
-    public String getUsernameFromToken(String token) {
-        return Objects.toString(getAllClaimsFromToken(token).get("username"), "");
+    public Mono<String> getUsernameFromToken(String token) {
+        return getAllClaimsFromToken(token).map(claims -> {
+            return Objects.toString(claims.get("username"), "");
+        });
     }
     public ArrayList<String> getRolesFromToken(String token) {
         return (ArrayList<String>) getAllClaimsFromToken(token).get("roles");
     }
+
     public Date getExpirationDateFromToken(String token) {
         return getAllClaimsFromToken(token).getExpiration();
     }
@@ -51,6 +56,8 @@ public class JwtUtil {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
     }
+
+
     public Boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
