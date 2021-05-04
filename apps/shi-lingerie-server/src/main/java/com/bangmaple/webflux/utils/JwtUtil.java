@@ -7,11 +7,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -70,25 +68,36 @@ public class JwtUtil {
         }
     }
 
-    public String createToken(Authentication authentication) {
-        String username = authentication.getName();
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        Claims claims = Jwts.claims().setSubject(username);
-        System.out.println(claims);
-        if (!authorities.isEmpty()) {
-            claims.put("username", username);
-            claims.put("roles", authorities.stream().map(GrantedAuthority::getAuthority)
-            .collect(Collectors.joining(",")));
-        }
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + expireTime);
+    public Mono<Claims> createCurrentOwnClaims(Authentication authentication) {
+        return Mono.defer(() -> {
+            Mono<Collection<? extends GrantedAuthority>> authorities = Mono.just(authentication.getAuthorities());
+            String username = authentication.getName();
+            Mono<Claims> claims = Mono.just(Jwts.claims().setSubject(username));
+            return authorities.flatMap((auth) -> {
+               if (!auth.isEmpty()) {
+                   return claims.map(claimList -> {
+                     claimList.put("roles", auth.stream().map(GrantedAuthority::getAuthority)
+                               .collect(Collectors.joining(",")));
+                     return claimList;
+                   });
+               }
+               return Mono.error(NoSuchElementException::new);
+            });
+        });
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(SignatureAlgorithm.HS256, SECRET)
-                .compact();
+    }
+
+    public Mono<String> createToken(Authentication authentication) {
+        return createCurrentOwnClaims(authentication).map(c -> {
+            Date now = new Date();
+            Date validity = new Date(now.getTime() + expireTime);
+            return Jwts.builder()
+                    .setClaims((Claims) c)
+                    .setIssuedAt(now)
+                    .setExpiration(validity)
+                    .signWith(SignatureAlgorithm.HS256, SECRET)
+                    .compact();
+        });
     }
 
 }

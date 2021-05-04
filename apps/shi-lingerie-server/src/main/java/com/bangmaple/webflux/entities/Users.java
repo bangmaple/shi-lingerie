@@ -38,7 +38,7 @@ public class Users {
     @NotBlank(message = "Fullname is mandatory")
     private String fullname;
 
-    @Column("role")
+    @Column("role_name")
     @NotBlank(message = "Role is mandatory")
     private String role;
 

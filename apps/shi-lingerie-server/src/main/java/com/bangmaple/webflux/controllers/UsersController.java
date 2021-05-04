@@ -1,13 +1,15 @@
 package com.bangmaple.webflux.controllers;
 
-import com.bangmaple.webflux.entities.AuthenticationModel;
-import com.bangmaple.webflux.entities.UserSignupModel;
+import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.services.UsersService;
 import com.bangmaple.webflux.utils.ValidatorUtil;
-import com.bangmaple.webflux.validator.UsersValidator;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,16 +18,11 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("api/v1/users")
+@RequiredArgsConstructor
 public class UsersController {
 
     private final UsersService service;
     private final ValidatorUtil<Users> validatorUtil;
-
-    public UsersController(UsersService service,
-                           ValidatorUtil validatorUtil) {
-        this.service = service;
-        this.validatorUtil = validatorUtil;
-    }
 
     @GetMapping
     public Mono<ResponseEntity<Flux<Users>>> getAll() {
@@ -33,6 +30,7 @@ public class UsersController {
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("permitAll()")
     public Mono<ResponseEntity<Mono<Users>>> getUserById(@PathVariable("id") Integer id) {
         return Mono.just(ResponseEntity.ok(service.getUserById(Mono.just(id))));
     }
@@ -45,28 +43,13 @@ public class UsersController {
     }
     * */
     @PostMapping
-    public Mono<ResponseEntity<Mono<Users>>> addUser( @RequestBody Mono<@Valid Users> user) {
+    public Mono<ResponseEntity<Mono<Users>>> addUser(@RequestBody Mono<@Valid Users> user) {
         return Mono.just(user).map(service::add).flatMap((u) -> Mono.just(ResponseEntity.ok(u)));
     }
 
     @DeleteMapping("{id}")
-    //@PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("permitAll()")
     public Mono<ResponseEntity<Mono<Void>>> deleteUserById(@PathVariable("id") Integer id) {
         return Mono.just(ResponseEntity.ok(service.deleteById(Mono.just(id))));
-    }
-
-    @PostMapping("signout")
-    public Mono<ResponseEntity<Mono<?>>> signout() {
-        return Mono.empty();
-    }
-
-    @PostMapping("signin")
-    public Mono<ResponseEntity<Mono<?>>> signin(@RequestBody Mono<AuthenticationModel> user) {
-        return Mono.just(ResponseEntity.ok(service.signin(user)));
-    }
-
-    @PostMapping("signup")
-    public Mono<ResponseEntity<Mono<?>>> signup(@RequestBody Mono<@Valid UserSignupModel> user) {
-        return Mono.just(ResponseEntity.ok(service.signup(user)));
     }
 }

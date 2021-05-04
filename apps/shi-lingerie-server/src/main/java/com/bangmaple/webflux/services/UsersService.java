@@ -1,44 +1,21 @@
 package com.bangmaple.webflux.services;
 
-import com.bangmaple.webflux.entities.AuthenticationModel;
-import com.bangmaple.webflux.entities.UserSignupModel;
+
 import com.bangmaple.webflux.entities.Users;
-import com.bangmaple.webflux.repositories.UsersRepository;
-import com.bangmaple.webflux.utils.JwtUtil;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class UsersService {
 
-    private UsersRepository repo;
-    private PasswordEncoder passwordEncoder;
-
-    private ReactiveAuthenticationManager authenticationManager;
-    private JwtUtil jwtUtil;
-
-    public UsersService(UsersRepository repo,
-                        PasswordEncoder passwordEncoder,
-                        ReactiveAuthenticationManager authenticationManager,
-                        JwtUtil jwtUtil) {
-        this.repo = repo;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-    }
+    private final ReactiveUsersRepository repo;
 
     public Flux<Users> getAll() {
         return repo.findAll();
@@ -73,40 +50,13 @@ public class UsersService {
     public Mono<Users> updateUser(Mono<Integer> id, Mono<Users> user) {
         return repo.findById(id).switchIfEmpty(Mono.error(NoSuchElementException::new))
                 .flatMap((u) -> mapDTOToEntity(Mono.just(u)))
-                .flatMap((u) -> (repo.save(u)));
+                .flatMap(repo::save);
     }
 
     public Mono<Void> deleteById(Mono<Integer> id) {
         return repo.existsById(id).flatMap((flag) -> !flag
-                ?  Mono.error(NoSuchElementException::new)
-                : Mono.empty());
+                ? Mono.error(NoSuchElementException::new)
+                : repo.deleteById(id));
     }
-
-    public Mono<?> signin(Mono<AuthenticationModel> user) {
-        return user.flatMap(u ->  this.authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(u.getUsername(), passwordEncoder.encode(u.getPassword())))
-                    .map(jwtUtil::createToken))
-                .map(jwt -> {
-                    HttpHeaders httpHeaders = new HttpHeaders();
-                    httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
-                    var tokenBody = Map.of("access_token", jwt);
-                    return new ResponseToken(tokenBody,httpHeaders, HttpStatus.OK);
-                });
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    class ResponseToken {
-        private Map<String, String> tokenBody;
-        private HttpHeaders header;
-        private HttpStatus status;
-
-    }
-
-    public Mono<Users> signup(Mono<UserSignupModel> user) {
-        return user.flatMap(u -> repo.save(new Users(u.getUsername(), passwordEncoder.encode(u.getPassword()), u.getFullname())));
-    }
-
 
 }
