@@ -33,15 +33,13 @@ public class AuthenticateController {
     }
 
     @PostMapping("signin")
-    @PreAuthorize("permitAll()")
-    public Mono<ResponseEntity<?>> signIn(@RequestBody Mono<AuthenticationRequest> user) {
+    public Mono<ResponseEntity<?>> signIn(@RequestBody Mono<@Valid AuthenticationRequest> user) {
         return service.signin(user).flatMap(map -> Mono.just(ResponseEntity.status(HttpStatus.OK)
                 .header(HttpHeaders.AUTHORIZATION, (String) map.get(HttpHeaders.AUTHORIZATION))
                 .body(map.get("USER"))));
     }
 
     @PostMapping("signup")
-    @PreAuthorize("permitAll()")
     public Mono<ResponseEntity<Mono<?>>> signUp(@RequestBody Mono<@Valid SignUpModel> user) {
         return Mono.just(ResponseEntity.ok(service.signup(user)));
     }

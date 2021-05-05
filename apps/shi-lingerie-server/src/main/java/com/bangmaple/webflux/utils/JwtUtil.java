@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -35,8 +36,8 @@ public class JwtUtil {
                 .getBody());
     }
 
-    public Long getUserIdFromToken(String token) {
-        return Long.parseLong(getAllClaimsFromToken(token).getSubject());
+    public Mono<Long> getUserIdFromToken(String token) {
+        return getAllClaimsFromToken(token).map(claims -> Long.parseLong(claims.getSubject()));
     }
 
     public Mono<String> getUsernameFromToken(String token) {
@@ -44,24 +45,25 @@ public class JwtUtil {
             return Objects.toString(claims.get("username"), "");
         });
     }
-    public ArrayList<String> getRolesFromToken(String token) {
-        return (ArrayList<String>) getAllClaimsFromToken(token).get("roles");
+    public Flux<String> getRolesFromToken(String token) {
+        return  getAllClaimsFromToken(token)
+                .flatMapMany(claims -> Flux.fromIterable((ArrayList<String>)claims.get("roles")));
     }
 
-    public Date getExpirationDateFromToken(String token) {
-        return getAllClaimsFromToken(token).getExpiration();
+    public Mono<Date> getExpirationDateFromToken(String token) {
+        return getAllClaimsFromToken(token).map(Claims::getExpiration);
     }
 
-    private Boolean isTokenExpired(String token) {
-        final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
+    private Mono<Boolean> isTokenExpired(String token) {
+        return getExpirationDateFromToken(token)
+                .map(expirationDate -> expirationDate.before(new Date()));
     }
 
 
-    public Boolean validateToken(String token) {
+    public Mono<Boolean> validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
-            return !isTokenExpired(token);
+            return isTokenExpired(token).map(isExpired -> !isExpired);
         } catch (SignatureException ex) {
             throw new JwtException("Invalid JWT signature", ex);
         } catch (MalformedJwtException ex) {
@@ -74,6 +76,8 @@ public class JwtUtil {
             throw new JwtException("JWT claims is empty.", ex);
         }
     }
+
+
 
     public Mono<Claims> createCurrentOwnClaims(Authentication authentication) {
         return Mono.defer(() -> {

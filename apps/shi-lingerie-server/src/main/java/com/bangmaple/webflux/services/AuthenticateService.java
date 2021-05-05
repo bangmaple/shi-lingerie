@@ -1,6 +1,7 @@
 package com.bangmaple.webflux.services;
 
 import com.bangmaple.webflux.models.AuthenticationRequest;
+import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.models.SignUpModel;
 import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
@@ -32,6 +33,7 @@ public class AuthenticateService {
                 .flatMap((authenticatedUser ->
                         repo.findAuthenticationResponseByUsername(((User) authenticatedUser
                                 .getPrincipal()).getUsername())
+                               // .flatMap(this::setSignedInStatus)
                                 .flatMap(userDetail -> jwtUtil
                                         .createToken(authenticatedUser).flatMap(jwtToken -> Mono.just(Map
                                                 .of(HttpHeaders.AUTHORIZATION,
@@ -42,5 +44,13 @@ public class AuthenticateService {
     public Mono<Users> signup(Mono<SignUpModel> user) {
         return user.flatMap(u -> repo.signUpAUser(u.getUsername(),
                 passwordEncoder.encode(u.getPassword()), u.getFullname()));
+    }
+
+    public Mono<AuthenticationResponse> setSignedInStatus(AuthenticationResponse res) {
+        return repo.changeToSignedInStatus(res.getUsername()).map(flag -> res);
+    }
+
+    public Mono<AuthenticationResponse> setSignedOutStatus(AuthenticationResponse res) {
+         return repo.changeToSignedOutStatus(res.getUsername()).map(flag -> res);
     }
 }

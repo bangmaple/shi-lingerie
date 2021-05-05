@@ -19,7 +19,7 @@ public class Users {
         this.username = username;
         this.password = password;
         this.fullname = fullname;
-        this.role = "ADMIN";
+        this.role = "USER";
     }
 
     @Id
@@ -44,6 +44,9 @@ public class Users {
 
     @Column("is_activated")
     private boolean isActivated;
+
+    @Column("is_signed_out")
+    private boolean isSignedOut;
 
     public Users(Users user) {
     }
