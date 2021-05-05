@@ -5,7 +5,7 @@
 This project was generated using [Nx](https://nx.dev).
 
 <p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
-
+mkcert-v1.4.3-windows-amd64.exe -pkcs12 -p12-file self-signed-cert.p12 localhost 127.0.0.1 ::1
 🔎 **Powerful, Extensible Dev Tools**
 
 ## Quick Start & Documentation
