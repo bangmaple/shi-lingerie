@@ -5,6 +5,7 @@ import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
 import com.bangmaple.webflux.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.reactive.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,26 +39,18 @@ public class SecurityConfig implements WebFluxConfigurer {
 
     private final JwtUtil jwtUtil;
 
-    private static final String API = "/api/v1/";
-    private static final String USERS = "users/";
+    @Value("${security.api}")
+    private String API;
 
-    private static final String[] AUTHENTICATION_PATHS = {
-            API + USERS + "signin",
-            API + USERS + "signup",
-            API + USERS + "forgotpwd"
-    };
+    @Value("${security.api.users}")
+    private String USERS;
+
+    @Value("${security.api.authentication-paths}")
+    private String[] AUTHENTICATION_PATHS;
 
 
-    private static final String[] ALLOWED_PATHS = {"/",
-            "/favicon.ico",
-            "/*.png",
-            "/*.gif",
-            "/*.svg",
-            "/*.jpg",
-            "/*.html",
-            "/*.css",
-            "/*.js",
-            "/actuator/**"};
+    @Value("${security.allowed-paths}")
+    private String[] ALLOWED_PATHS;
 
 
     @Bean
@@ -65,8 +58,7 @@ public class SecurityConfig implements WebFluxConfigurer {
                                                                      ReactiveAuthenticationManager
                                                                              reactiveAuthenticationManager)  {
         return http
-                .cors()
-                .and()
+                .cors(ServerHttpSecurity.CorsSpec::disable)
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authenticationManager(reactiveAuthenticationManager)
@@ -75,7 +67,7 @@ public class SecurityConfig implements WebFluxConfigurer {
                             .matchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                             .pathMatchers(HttpMethod.POST, AUTHENTICATION_PATHS).permitAll()
                             .pathMatchers(HttpMethod.GET, ALLOWED_PATHS).permitAll()
-                            .pathMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN"))
+                            .pathMatchers(HttpMethod.DELETE, API + USERS +"/**").hasRole("ADMIN"))
 
                 .addFilterAt(new JwtAuthenticationFilter(jwtUtil), SecurityWebFiltersOrder.HTTP_BASIC)
                 .build();

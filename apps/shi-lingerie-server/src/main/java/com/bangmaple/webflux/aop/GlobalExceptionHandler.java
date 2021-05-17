@@ -1,6 +1,8 @@
 package com.bangmaple.webflux.aop;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -22,24 +24,21 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 @Slf4j
+@PropertySource("classpath:global-exception-en.properties")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(LockedException.class)
     public Mono<ResponseEntity<ExceptionResponse>> handleUserAccountLockedException(LockedException ex) {
         return Mono.just(ResponseEntity
-        .badRequest().body(new ExceptionResponse(LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Your account is locked! Please contact to Administrator for more details.",
-                        "")));
+        .badRequest().body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+            ACCOUNT_IS_LOCKED, "")));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public Mono<ResponseEntity<ExceptionResponse>> handleInvalidUsernamePasswordException(BadCredentialsException ex) {
         return Mono.just(ResponseEntity
-                .badRequest().body(new ExceptionResponse(LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Invalid username or password. Please try again later.",
-                        ex.getMessage())));
+                .badRequest().body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                        INVALID_USERNAME_PASSWORD, ex.getMessage())));
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -59,8 +58,7 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<ExceptionResponse>> handleDBException(DataIntegrityViolationException ex) {
       //  log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity.badRequest()
-                .body(new ExceptionResponse(LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
+                .body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
                         HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage())));
     }
 
@@ -68,8 +66,7 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<ExceptionResponse>> handleEntityValidationException(EntityValidatingException ex) {
         //  log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity.badRequest()
-                .body(new ExceptionResponse(LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
+                .body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
                         HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getErrors())));
     }
 
@@ -77,17 +74,29 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<ExceptionResponse>> handleInputMismatchException(NoSuchElementException ex) {
         //  log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity.badRequest()
-                .body(new ExceptionResponse(LocalDateTime.now(),
-                        HttpStatus.BAD_REQUEST.value(),
-                        HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                        "Cannot find the entity with the provided id.")));
+                .body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.BAD_REQUEST.getReasonPhrase(), ENTITY_NOT_EXISTED_WITH_ID)));
     }
 
     @ExceptionHandler({DecodingException.class, ServerWebInputException.class})
     public Mono<ResponseEntity<ExceptionResponse>> handleInvalidIncomingRequestData(Exception ex) {
         return Mono.just(ResponseEntity
                 .badRequest().body((new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
-                        "Invalid requested data. Please try again before sending.",
-                        "Invalid data."))));
+                        INVALID_REQUESTED_DATA, INVALID_DATA))));
     }
+
+  @Value("${entity-not-existed-with-id}")
+  private String ENTITY_NOT_EXISTED_WITH_ID;
+
+  @Value("${invalid-requested-data}")
+  private String INVALID_REQUESTED_DATA;
+
+  @Value("${account-is-locked}")
+  private String ACCOUNT_IS_LOCKED;
+
+  @Value("${invalid-username-password}")
+  private String INVALID_USERNAME_PASSWORD;
+
+  @Value("${invalid-data}")
+  private String INVALID_DATA;
 }

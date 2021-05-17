@@ -2,6 +2,7 @@ package com.bangmaple.webflux.utils;
 
 import com.bangmaple.webflux.services.UserPrincipal;
 import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,8 +17,11 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtil {
 
-    public static final String SECRET = "1234567890987654321";
-    public static final Long expireTime = 86400000L;
+    @Value("${jwt.secret-key}")
+    public String SECRET;
+
+    @Value("${jwt.expiration-time}")
+    public Long expireTime;
 
     public Mono<Authentication> getAuthentication(String token) {
         return getAllClaimsFromToken(token).map((claims) -> {

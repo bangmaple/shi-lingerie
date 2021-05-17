@@ -2,6 +2,7 @@ package com.bangmaple.webflux.filter;
 
 import com.bangmaple.webflux.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -15,29 +16,35 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter implements WebFilter {
-    private final JwtUtil jwtUtil;
+  private final JwtUtil jwtUtil;
 
+  @Value("${jwt.token-type}")
+  private String tokenType;
 
-    private String resolveToken(ServerHttpRequest request) {
-        String bearerToken = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer")) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
+  private Mono<String> resolveToken(ServerHttpRequest request) {
+    return Mono.create((sink) -> {
+      String bearerToken = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+      if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(tokenType)) {
+        sink.success(bearerToken.substring(7));
+      } else {
+        sink.success();
+      }
+    });
+  }
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String token = resolveToken(exchange.getRequest());
-        if (StringUtils.hasText(token)) {
-            this.jwtUtil.validateToken(token).map(isValidated -> {
-                if (isValidated) {
-                    return this.jwtUtil.getAuthentication(token).map(authentication -> chain.filter(exchange)
-                            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)));
-                }
-                return chain.filter(exchange);
-            });
-        }
-        return chain.filter(exchange);
-    }
+  @Override
+  public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    return resolveToken(exchange.getRequest()).flatMap((token) -> {
+      if (StringUtils.hasText(token)) {
+        this.jwtUtil.validateToken(token).map(isValidated -> {
+          if (isValidated) {
+            return this.jwtUtil.getAuthentication(token).map(authentication -> chain.filter(exchange)
+              .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)));
+          }
+          return chain.filter(exchange);
+        });
+      }
+      return chain.filter(exchange);
+    }).switchIfEmpty(Mono.defer(() -> chain.filter(exchange)));
+  }
 }

@@ -1,5 +1,6 @@
 package com.bangmaple.webflux.filter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
@@ -9,17 +10,19 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 @Configuration
 public class CORSFilter implements WebFluxConfigurer {
 
-    private static final long MAX_AGE_SECS = 3600;
-    private static final String[] HTTP_METHODS_ALLOWED = {"HEAD", "OPTIONS", "GET",
-            "POST", "PUT", "PATCH", "DELETE", "UPDATE"};
+  @Value("${cors.max-age}")
+  private Integer MAX_AGE_SECS;
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowedMethods(HTTP_METHODS_ALLOWED)
-                .allowedHeaders("*")
-                .maxAge(MAX_AGE_SECS);
-    }
+  @Value("${cors.allowed-http-methods}")
+  private String[] HTTP_METHODS_ALLOWED;
+
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/**")
+      .allowedOrigins("*")
+      .allowedMethods(HTTP_METHODS_ALLOWED)
+      .allowedHeaders("*")
+      .maxAge(MAX_AGE_SECS);
+  }
 
 }

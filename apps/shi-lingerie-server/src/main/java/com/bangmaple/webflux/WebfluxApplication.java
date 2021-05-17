@@ -20,4 +20,5 @@ public class WebfluxApplication {
     public PasswordEncoder enableBCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }
