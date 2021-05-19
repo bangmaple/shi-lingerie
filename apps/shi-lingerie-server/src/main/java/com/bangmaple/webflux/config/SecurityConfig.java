@@ -21,6 +21,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
@@ -37,61 +39,66 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 )*/
 public class SecurityConfig implements WebFluxConfigurer {
 
-    private final JwtUtil jwtUtil;
+  private final JwtUtil jwtUtil;
 
-    @Value("${security.api}")
-    private String API;
+  @Value("${security.api}")
+  private String API;
 
-    @Value("${security.api.users}")
-    private String USERS;
+  @Value("${security.api.users}")
+  private String USERS;
 
-    @Value("${security.api.authentication-paths}")
-    private String[] AUTHENTICATION_PATHS;
-
-
-    @Value("${security.allowed-paths}")
-    private String[] ALLOWED_PATHS;
+  @Value("${security.api.authentication-paths}")
+  private String[] AUTHENTICATION_PATHS;
 
 
-    @Bean
-    protected SecurityWebFilterChain configureSecurityWebFilterChain(ServerHttpSecurity http,
-                                                                     ReactiveAuthenticationManager
-                                                                             reactiveAuthenticationManager)  {
-        return http
-                .cors(ServerHttpSecurity.CorsSpec::disable)
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-                .authenticationManager(reactiveAuthenticationManager)
-                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                .authorizeExchange((it) -> it
-                            .matchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                            .pathMatchers(HttpMethod.POST, AUTHENTICATION_PATHS).permitAll()
-                            .pathMatchers(HttpMethod.GET, ALLOWED_PATHS).permitAll()
-                            .pathMatchers(HttpMethod.DELETE, API + USERS +"/**").hasRole("ADMIN"))
+  @Value("${security.allowed-paths}")
+  private String[] ALLOWED_PATHS;
 
-                .addFilterAt(new JwtAuthenticationFilter(jwtUtil), SecurityWebFiltersOrder.HTTP_BASIC)
-                .build();
 
-    }
+  @Bean
+  protected SecurityWebFilterChain configureSecurityWebFilterChain(ServerHttpSecurity http,
+                                                                   ReactiveAuthenticationManager
+                                                                     reactiveAuthenticationManager) {
+    return http
+      .cors(ServerHttpSecurity.CorsSpec::disable)
+      .csrf(ServerHttpSecurity.CsrfSpec::disable)
+      .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+      .logout(ServerHttpSecurity.LogoutSpec::disable)
+      .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+      .authenticationManager(reactiveAuthenticationManager)
+      .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+      .addFilterBefore(new JwtAuthenticationFilter(jwtUtil),
+        SecurityWebFiltersOrder.AUTHORIZATION)
+      .authorizeExchange((it) -> it
+          .matchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+          .pathMatchers(HttpMethod.POST, AUTHENTICATION_PATHS).permitAll()
+          .pathMatchers(HttpMethod.GET, ALLOWED_PATHS).permitAll()
+          .pathMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+        // .pathMatchers(HttpMethod.DELETE, API + USERS +"/**").hasRole("ADMIN")
+      )
 
-    @Bean
-    public ReactiveUserDetailsService userDetailsService(ReactiveUsersRepository users) {
-        return username -> users.findByUsername(username)
-                .map(u -> User.withUsername(u.getUsername())
-                                .password(u.getPassword())
-                .authorities(u.getRole())
-                .accountExpired(!u.isActivated())
-                .credentialsExpired(!u.isActivated())
-                .disabled(!u.isActivated())
-                .accountLocked(!u.isActivated())
-                .build());
-    }
+      .build();
 
-    @Bean
-    public ReactiveAuthenticationManager reactiveAuthenticationManager(ReactiveUserDetailsService userDetailsService,
-                                                                       PasswordEncoder passwordEncoder) {
-        var authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-        authenticationManager.setPasswordEncoder(passwordEncoder);
-        return authenticationManager;
-    }
+  }
+
+  @Bean
+  public ReactiveUserDetailsService userDetailsService(ReactiveUsersRepository users) {
+    return username -> users.findByUsername(username)
+      .map(u -> User.withUsername(u.getUsername())
+        .password(u.getPassword())
+        .authorities(u.getRole())
+        .accountExpired(!u.isActivated())
+        .credentialsExpired(!u.isActivated())
+        .disabled(!u.isActivated())
+        .accountLocked(!u.isActivated())
+        .build());
+  }
+
+  @Bean
+  public ReactiveAuthenticationManager reactiveAuthenticationManager(ReactiveUserDetailsService userDetailsService,
+                                                                     PasswordEncoder passwordEncoder) {
+    var authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+    authenticationManager.setPasswordEncoder(passwordEncoder);
+    return authenticationManager;
+  }
 }

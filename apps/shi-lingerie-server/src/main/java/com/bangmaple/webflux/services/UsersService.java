@@ -4,6 +4,7 @@ package com.bangmaple.webflux.services;
 import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,8 +22,9 @@ public class UsersService {
         return repo.findAll();
     }
 
+  @PreAuthorize("hasRole('ADMIN')")
     public Mono<Users> add(Mono<Users> user) {
-        return user.flatMap(u -> repo.save(u)).switchIfEmpty(Mono.error(NullPointerException::new));
+        return user.flatMap(repo::save).switchIfEmpty(Mono.error(NullPointerException::new));
     }
 
     public Mono<Users> getUserById(Mono<Integer> id) {

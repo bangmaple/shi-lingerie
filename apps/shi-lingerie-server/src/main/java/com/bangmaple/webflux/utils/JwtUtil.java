@@ -23,35 +23,41 @@ public class JwtUtil {
     @Value("${jwt.expiration-time}")
     public Long expireTime;
 
+    private static final String JWT_CLAIMS_ROLES = "roles";
+
+    private Jws<Claims> claimsInstance;
+
     public Mono<Authentication> getAuthentication(String token) {
         return getAllClaimsFromToken(token).map((claims) -> {
-            Object authoritiesClaim = claims.get("roles");
-            Object username = claims.get("username");
-            Collection<? extends GrantedAuthority> authorities = authoritiesClaim == null ?
-                    AuthorityUtils.NO_AUTHORITIES : AuthorityUtils.commaSeparatedStringToAuthorityList(authoritiesClaim.toString());
-            UserPrincipal principal = new UserPrincipal(username.toString(), authorities);
-            return (Authentication)new UsernamePasswordAuthenticationToken(principal, token, authorities);
+            String authoritiesClaim = Objects.toString(claims.get(JWT_CLAIMS_ROLES), "");
+            String username = claims.getSubject();
+            Collection<? extends GrantedAuthority> authorities = AuthorityUtils
+              .commaSeparatedStringToAuthorityList(authoritiesClaim);
+            UserPrincipal principal = new UserPrincipal(username, authorities);
+            return new UsernamePasswordAuthenticationToken(principal, token, authorities);
         });
 
     }
 
     public Mono<Claims> getAllClaimsFromToken(String token) {
-        return Mono.just(Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token)
-                .getBody());
+        return Mono.just(claimsInstance.getBody());
     }
 
+    //Deprecated
     public Mono<Long> getUserIdFromToken(String token) {
         return getAllClaimsFromToken(token).map(claims -> Long.parseLong(claims.getSubject()));
     }
 
     public Mono<String> getUsernameFromToken(String token) {
-        return getAllClaimsFromToken(token).map(claims -> {
-            return Objects.toString(claims.get("username"), "");
-        });
+        return getAllClaimsFromToken(token).map(claims -> Objects
+          .toString(claims.getSubject(), ""));
     }
+
+    //Deprecated
     public Flux<String> getRolesFromToken(String token) {
         return  getAllClaimsFromToken(token)
-                .flatMapMany(claims -> Flux.fromIterable((ArrayList<String>)claims.get("roles")));
+                .flatMapMany(claims -> Flux.fromIterable((ArrayList<String>)claims
+                  .get(JWT_CLAIMS_ROLES)));
     }
 
     public Mono<Date> getExpirationDateFromToken(String token) {
@@ -66,7 +72,7 @@ public class JwtUtil {
 
     public Mono<Boolean> validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
+          claimsInstance = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
             return isTokenExpired(token).map(isExpired -> !isExpired);
         } catch (SignatureException ex) {
             throw new JwtException("Invalid JWT signature", ex);
@@ -81,33 +87,26 @@ public class JwtUtil {
         }
     }
 
-
-
     public Mono<Claims> createCurrentOwnClaims(Authentication authentication) {
-        return Mono.defer(() -> {
-            Mono<Collection<? extends GrantedAuthority>> authorities = Mono.just(authentication.getAuthorities());
+        return Mono.just(authentication.getAuthorities())
+          .map((auth) -> {
             String username = authentication.getName();
-            Mono<Claims> claims = Mono.just(Jwts.claims().setSubject(username));
-            return authorities.flatMap((auth) -> {
-               if (!auth.isEmpty()) {
-                   return claims.map(claimList -> {
-                     claimList.put("roles", auth.stream().map(GrantedAuthority::getAuthority)
-                               .collect(Collectors.joining(",")));
-                     return claimList;
-                   });
-               }
-               return Mono.error(NoSuchElementException::new);
-            });
-        });
-
+            Claims claims = Jwts.claims().setSubject(username);
+            if (!auth.isEmpty()) {
+              claims.put(JWT_CLAIMS_ROLES, auth.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(",")));
+            }
+            return claims;
+          });
     }
 
     public Mono<String> createToken(Authentication authentication) {
-        return createCurrentOwnClaims(authentication).map(c -> {
+        return createCurrentOwnClaims(authentication).map(claims -> {
             Date now = new Date();
             Date validity = new Date(now.getTime() + expireTime);
             return Jwts.builder()
-                    .setClaims((Claims) c)
+                    .setClaims(claims)
                     .setIssuedAt(now)
                     .setExpiration(validity)
                     .signWith(SignatureAlgorithm.HS256, SECRET)
