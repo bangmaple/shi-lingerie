@@ -75,9 +75,7 @@ public class SecurityConfig implements WebFluxConfigurer {
           .pathMatchers(HttpMethod.GET, ALLOWED_PATHS).permitAll()
           .pathMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
         // .pathMatchers(HttpMethod.DELETE, API + USERS +"/**").hasRole("ADMIN")
-      )
-
-      .build();
+      ).build();
 
   }
 

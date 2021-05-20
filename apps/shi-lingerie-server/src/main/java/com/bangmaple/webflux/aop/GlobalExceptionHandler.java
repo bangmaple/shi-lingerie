@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.codec.DecodingException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.BodyInserter;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
@@ -26,6 +30,13 @@ import java.util.NoSuchElementException;
 @Slf4j
 @PropertySource("classpath:global-exception-en.properties")
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(DataAccessResourceFailureException.class)
+  public Mono<ResponseEntity<ExceptionResponse>> handleDatabaseConnectionFailure(DataAccessResourceFailureException e) {
+    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.SERVICE_UNAVAILABLE.value(),
+      "One or more services is down. Please comeback later!", "Service Unavailable")));
+
+  }
 
     @ExceptionHandler(LockedException.class)
     public Mono<ResponseEntity<ExceptionResponse>> handleUserAccountLockedException(LockedException ex) {
