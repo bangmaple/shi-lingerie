@@ -11,8 +11,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-@Slf4j
-@
 public class GlobalJWTExceptionHandler {
   @ExceptionHandler(JwtException.class)
   public Mono<ResponseEntity<ExceptionResponse>> handleJwtException(JwtException e) {

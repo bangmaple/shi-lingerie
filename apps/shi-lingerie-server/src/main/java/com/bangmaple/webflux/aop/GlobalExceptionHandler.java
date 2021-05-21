@@ -67,10 +67,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Mono<ResponseEntity<ExceptionResponse>> handleDBException(DataIntegrityViolationException ex) {
+      return Mono.create((sink) -> {
+        String message = "The data you are trying to modifying is not allowed. Please try again later!";
+        if (ex.getMessage().contains("duplicate key value violates unique constraint")) {
+          message = "The username you are trying to signup is already exist. Please try another one.";
+        }
+         sink.success(ResponseEntity.badRequest()
+          .body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.getReasonPhrase(), message)));
+      });
       //  log.error(ex.getMessage(), ex);
-        return Mono.just(ResponseEntity.badRequest()
-                .body(new ExceptionResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
-                        HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage())));
+
     }
 
     @ExceptionHandler(EntityValidatingException.class)

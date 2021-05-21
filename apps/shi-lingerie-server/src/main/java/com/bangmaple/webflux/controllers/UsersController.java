@@ -1,5 +1,6 @@
 package com.bangmaple.webflux.controllers;
 
+import com.bangmaple.webflux.models.AddNewUserModel;
 import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.services.UsersService;
@@ -43,7 +44,7 @@ public class UsersController {
     }
     * */
     @PostMapping
-    public Mono<ResponseEntity<Mono<Users>>> addUser(@RequestBody Mono<@Valid Users> user) {
+    public Mono<ResponseEntity<Mono<Users>>> addUser(@RequestBody Mono<@Valid AddNewUserModel> user) {
         return Mono.just(user).map(service::add).flatMap((u) -> Mono.just(ResponseEntity.ok(u)));
     }
 

@@ -2,7 +2,7 @@ package com.bangmaple.webflux.utils;
 
 import com.bangmaple.webflux.models.AuthenticationRequest;
 import com.bangmaple.webflux.models.AuthenticationResponse;
-import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
+import com.bangmaple.webflux.repositories.AuthenticationUsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthenticationUtil {
 
-  private final ReactiveUsersRepository repo;
+  private final AuthenticationUsersRepository repo;
   private final JwtUtil jwtUtil;
   private final PasswordEncoder passwordEncoder;
   private final ReactiveAuthenticationManager authenticationManager;

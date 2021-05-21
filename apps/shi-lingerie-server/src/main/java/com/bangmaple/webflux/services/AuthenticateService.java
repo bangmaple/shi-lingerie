@@ -4,7 +4,7 @@ import com.bangmaple.webflux.models.AuthenticationRequest;
 import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.models.SignUpModel;
 import com.bangmaple.webflux.entities.Users;
-import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
+import com.bangmaple.webflux.repositories.AuthenticationUsersRepository;
 import com.bangmaple.webflux.utils.AuthenticationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthenticateService {
 
-    private final ReactiveUsersRepository repo;
+    private final AuthenticationUsersRepository repo;
     private final AuthenticationUtil authenticationUtil;
 
     public Mono<Map<String, Object>> signin(Mono<AuthenticationRequest> requestedAuthenticatingUser) {

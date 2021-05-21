@@ -6,7 +6,7 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 
-public interface ReactiveUsersRepository extends ReactiveCrudRepository<Users, Integer> {
+public interface AuthenticationUsersRepository extends ReactiveCrudRepository<Users, Integer> {
     @Query("SELECT u.id, u.username, u.fullname, u.password, u.is_activated, u.is_signed_out, r.role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.username = :username")
     Mono<Users> findByUsername(String username);
 

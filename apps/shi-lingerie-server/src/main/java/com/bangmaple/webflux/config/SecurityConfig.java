@@ -1,19 +1,16 @@
 package com.bangmaple.webflux.config;
 
 import com.bangmaple.webflux.filter.JwtAuthenticationFilter;
-import com.bangmaple.webflux.repositories.ReactiveUsersRepository;
+import com.bangmaple.webflux.repositories.AuthenticationUsersRepository;
 import com.bangmaple.webflux.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.reactive.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -21,8 +18,6 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
@@ -68,19 +63,19 @@ public class SecurityConfig implements WebFluxConfigurer {
       .authenticationManager(reactiveAuthenticationManager)
       .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
       .addFilterBefore(new JwtAuthenticationFilter(jwtUtil),
-        SecurityWebFiltersOrder.AUTHORIZATION)
+        SecurityWebFiltersOrder.AUTHENTICATION)
       .authorizeExchange((it) -> it
           .matchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
           .pathMatchers(HttpMethod.POST, AUTHENTICATION_PATHS).permitAll()
           .pathMatchers(HttpMethod.GET, ALLOWED_PATHS).permitAll()
-          .pathMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+          .pathMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
         // .pathMatchers(HttpMethod.DELETE, API + USERS +"/**").hasRole("ADMIN")
       ).build();
 
   }
 
   @Bean
-  public ReactiveUserDetailsService userDetailsService(ReactiveUsersRepository users) {
+  public ReactiveUserDetailsService userDetailsService(AuthenticationUsersRepository users) {
     return username -> users.findByUsername(username)
       .map(u -> User.withUsername(u.getUsername())
         .password(u.getPassword())

@@ -40,6 +40,6 @@ public class JwtAuthenticationFilter implements WebFilter {
         this.jwtUtil.getAuthentication(token).flatMap((authentication) ->
           chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder
             .withAuthentication(authentication)))))
-      .switchIfEmpty(chain.filter(exchange)).timeout(Duration.ofMillis(1000));
+      .switchIfEmpty(chain.filter(exchange)).timeout(Duration.ofMillis(100000));
   }
 }
