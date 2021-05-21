@@ -1,8 +1,6 @@
 package com.bangmaple.webflux.aop;
 
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.validation.ObjectError;
 
 import java.time.LocalDateTime;

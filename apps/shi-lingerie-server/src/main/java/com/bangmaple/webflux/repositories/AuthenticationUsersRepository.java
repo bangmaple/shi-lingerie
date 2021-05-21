@@ -1,7 +1,7 @@
 package com.bangmaple.webflux.repositories;
 
-import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.entities.Users;
+import com.bangmaple.webflux.models.AuthenticationResponse;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;

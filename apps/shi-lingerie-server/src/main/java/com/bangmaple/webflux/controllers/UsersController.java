@@ -1,16 +1,12 @@
 package com.bangmaple.webflux.controllers;
 
-import com.bangmaple.webflux.models.AddNewUserModel;
-import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.entities.Users;
+import com.bangmaple.webflux.models.AddNewUserModel;
 import com.bangmaple.webflux.services.UsersService;
 import com.bangmaple.webflux.utils.ValidatorUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,7 +40,7 @@ public class UsersController {
     }
     * */
     @PostMapping
-    public Mono<ResponseEntity<Mono<Users>>> addUser(@RequestBody Mono<@Valid AddNewUserModel> user) {
+    public Mono<ResponseEntity<Mono <Users>>> addUser(@RequestBody Mono<@Valid AddNewUserModel> user) {
         return Mono.just(user).map(service::add).flatMap((u) -> Mono.just(ResponseEntity.ok(u)));
     }
 

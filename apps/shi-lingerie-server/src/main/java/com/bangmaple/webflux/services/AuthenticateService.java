@@ -1,9 +1,9 @@
 package com.bangmaple.webflux.services;
 
+import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.models.AuthenticationRequest;
 import com.bangmaple.webflux.models.AuthenticationResponse;
 import com.bangmaple.webflux.models.SignUpModel;
-import com.bangmaple.webflux.entities.Users;
 import com.bangmaple.webflux.repositories.AuthenticationUsersRepository;
 import com.bangmaple.webflux.utils.AuthenticationUtil;
 import lombok.RequiredArgsConstructor;

@@ -1,12 +1,10 @@
 package com.bangmaple.webflux.services;
 
 import com.bangmaple.webflux.entities.Users;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 
 public class UserPrincipal extends Users implements UserDetails {
     private static final long serialVersionUID = -6572014278512709432L;
